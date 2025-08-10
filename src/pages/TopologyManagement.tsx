@@ -201,6 +201,14 @@ const typeConf = (t: NodeType) => t==='gateway'
   ? { color:'#722ed1', text:'中继' }
   : { color:'#13c2c2', text:'终端' }
 
+const customerTypeConf = (t: CustomerType) => t==='enterprise'
+  ? { color:'#1890ff', text:'企业' }
+  : t==='government'
+  ? { color:'#722ed1', text:'政府' }
+  : t==='education'
+  ? { color:'#52c41a', text:'教育' }
+  : { color:'#fa8c16', text:'医疗' }
+
 const cardStyle = {
   background: 'linear-gradient(135deg, #ffffff 0%, #fafbfc 100%)',
   borderRadius: 12,
@@ -572,6 +580,14 @@ const TopologyManagement: React.FC = () => {
       viewRef.current.scrollTop = 0
       console.log('View reset: scale=1, scroll=(0,0)')
     }
+
+    // 重置节点位置到初始状态
+    const topology = allTopologyMaps.find(topo => topo.id === selectedTopologyId)
+    if (topology) {
+      setNodes(topology.nodes.map(n => ({ ...n }))) // 深拷贝初始位置
+      console.log('Nodes reset to initial positions')
+      message.success('🔄 视图已重置到初始状态')
+    }
   }
 
   useEffect(() => {
@@ -729,7 +745,7 @@ const TopologyManagement: React.FC = () => {
                   {currentCustomer.name}
                 </div>
                 <Space size={4} wrap>
-                  <Tag color="blue">{currentCustomer.type}</Tag>
+                  <Tag color={customerTypeConf(currentCustomer.type).color}>{customerTypeConf(currentCustomer.type).text}</Tag>
                   <Tag color="green">{currentCustomer.deviceCount} 设备</Tag>
                 </Space>
                 <div style={{ fontSize: 12, color: '#8c8c8c', marginTop: 4 }}>
@@ -813,6 +829,18 @@ const TopologyManagement: React.FC = () => {
               }}
               extra={
                 <Space size={8} wrap>
+                  <Radio.Group
+                    value={labelMode}
+                    onChange={e=>setLabelMode(e.target.value)}
+                    style={{ borderRadius: 6 }}
+                    size="small"
+                  >
+                    <Radio.Button value="latency" style={{ borderRadius: '6px 0 0 6px' }}>延迟</Radio.Button>
+                    <Radio.Button value="distance">距离</Radio.Button>
+                    <Radio.Button value="rssi">信号</Radio.Button>
+                    <Radio.Button value="bandwidth">带宽</Radio.Button>
+                    <Radio.Button value="none" style={{ borderRadius: '0 6px 6px 0' }}>隐藏</Radio.Button>
+                  </Radio.Group>
                   <Tooltip title={showSidebar ? "隐藏侧边栏" : "显示侧边栏"} placement="bottom">
                     <Button
                       icon={showSidebar ? <MenuFoldOutlined /> : <MenuUnfoldOutlined />}
@@ -827,19 +855,6 @@ const TopologyManagement: React.FC = () => {
                       }}
                     />
                   </Tooltip>
-
-                  <Radio.Group
-                    value={labelMode}
-                    onChange={e=>setLabelMode(e.target.value)}
-                    style={{ borderRadius: 6 }}
-                    size="small"
-                  >
-                    <Radio.Button value="latency" style={{ borderRadius: '6px 0 0 6px' }}>延迟</Radio.Button>
-                    <Radio.Button value="distance">距离</Radio.Button>
-                    <Radio.Button value="rssi">信号</Radio.Button>
-                    <Radio.Button value="bandwidth">带宽</Radio.Button>
-                    <Radio.Button value="none" style={{ borderRadius: '0 6px 6px 0' }}>隐藏</Radio.Button>
-                  </Radio.Group>
                   <Tooltip title="放大" placement="bottom">
                     <Button
                       icon={<ZoomInOutlined />}
