@@ -4,11 +4,12 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "npx vite",
+    "build": "npx vite build",
+    "build:vercel": "node build.js",
     "lint": "eslint .",
-    "preview": "vite preview",
-    "check": "tsc --noEmit"
+    "preview": "npx vite preview",
+    "check": "npx tsc --noEmit"
   },
   "dependencies": {
     "react": "18.3.1",
