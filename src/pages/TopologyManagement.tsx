@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { Card, Row, Col, Space, Button, Tag, List, Avatar, Badge, Input, Select, Segmented, Tooltip, message, Radio, Checkbox, Tree } from 'antd'
+import { Card, Row, Col, Space, Button, Tag, List, Avatar, Badge, Input, Select, Tooltip, message, Radio, Checkbox, Tree } from 'antd'
 import type { DataNode } from 'antd/es/tree'
 import {
   NodeIndexOutlined, ClusterOutlined, ReloadOutlined, ExportOutlined,
@@ -53,9 +53,7 @@ interface TopologyMap {
 // Sample customer data - 简化为一级结构
 const initialCustomers: Customer[] = [
   { id: 'c1', name: '华为技术有限公司', type: 'enterprise', contact: '张经理', email: 'zhang@huawei.com', deviceCount: 18, status: 'active', createTime: '2024-01-15' },
-  { id: 'c2', name: '北京大学', type: 'education', contact: '陈教授', email: 'chen@pku.edu.cn', deviceCount: 18, status: 'active', createTime: '2024-01-20' },
-  { id: 'c3', name: '市政府办公楼', type: 'government', contact: '赵主任', email: 'zhao@gov.cn', deviceCount: 15, status: 'active', createTime: '2024-01-10' },
-  { id: 'c4', name: '人民医院', type: 'healthcare', contact: '孙院长', email: 'sun@hospital.com', deviceCount: 20, status: 'active', createTime: '2024-01-25' },
+  { id: 'c2', name: '北京大学', type: 'education', contact: '陈教授', email: 'chen@pku.edu.cn', deviceCount: 18, status: 'active', createTime: '2024-01-20' }
 ]
 
 // Sample topology maps for different customers
@@ -829,16 +827,7 @@ const TopologyManagement: React.FC = () => {
                       }}
                     />
                   </Tooltip>
-                  <Segmented
-                    options={[
-                      {label:'🔄 力导向', value:'force'},
-                      {label:'📊 层次', value:'hierarchy'}
-                    ]}
-                    value={layout}
-                    onChange={v=>{ setLayout(v as any); setTimeout(()=>autoLayout(), 0) }}
-                    style={{ borderRadius: 6 }}
-                    size="small"
-                  />
+
                   <Radio.Group
                     value={labelMode}
                     onChange={e=>setLabelMode(e.target.value)}
