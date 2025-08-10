@@ -37,6 +37,19 @@ body {
   position: relative !important;
 }
 
+/* 响应式设计 - 小屏幕优化 */
+@media (max-height: 768px) {
+  .sidebar-panels .panel-overview {
+    height: 300px !important;
+  }
+}
+
+@media (max-height: 600px) {
+  .sidebar-panels .panel-overview {
+    height: 250px !important;
+  }
+}
+
 /* 面板标题通用样式 */
 .sidebar-panels .panel-overview > div:first-child,
 .sidebar-panels .panel-nodes > div:first-child,

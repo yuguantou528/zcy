@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Card, Row, Col, Space, Button, Tag, List, Avatar, Badge, Input, Select, Tooltip, message, Radio, Checkbox, Tree } from 'antd'
 import type { DataNode } from 'antd/es/tree'
 import {
-  NodeIndexOutlined, ClusterOutlined, ReloadOutlined, ExportOutlined,
+  NodeIndexOutlined, ReloadOutlined, ExportOutlined,
   CheckCircleOutlined, ExclamationCircleOutlined, CloseCircleOutlined, WifiOutlined,
   DeploymentUnitOutlined, SearchOutlined, AimOutlined, FullscreenOutlined,
   FullscreenExitOutlined, ZoomInOutlined, ZoomOutOutlined, CompressOutlined,
@@ -18,6 +18,7 @@ type CustomerType = 'enterprise' | 'government' | 'education' | 'healthcare'
 interface MeshNode {
   id: string; name: string; type: NodeType; status: NodeStatus;
   mac: string; ip: string; links: string[]; x: number; y: number; rssi: number;
+  frequency: number; // 工作频率，单位MHz
   customerId: string; // 关联到客户
 }
 
@@ -68,11 +69,11 @@ const topologyMaps: TopologyMap[] = [
     layoutPreference: 'hierarchy',
     labelMode: 'latency',
     nodes: [
-      { id: 'c1-t1-n1', name: '总部-网关A', type: 'gateway', status: 'online', mac: 'AA:BB:CC:DD:EE:01', ip: '192.168.1.1', links: ['c1-t1-n2','c1-t1-n3'], x: 300, y: 200, rssi: -45, customerId: 'c1' },
-      { id: 'c1-t1-n2', name: '总部-中继1', type: 'relay', status: 'online', mac: 'AA:BB:CC:DD:EE:02', ip: '192.168.1.2', links: ['c1-t1-n1','c1-t1-n4'], x: 520, y: 240, rssi: -60, customerId: 'c1' },
-      { id: 'c1-t1-n3', name: '总部-中继2', type: 'relay', status: 'warning', mac: 'AA:BB:CC:DD:EE:03', ip: '192.168.1.3', links: ['c1-t1-n1','c1-t1-n5'], x: 280, y: 380, rssi: -72, customerId: 'c1' },
-      { id: 'c1-t1-n4', name: '总部-终端1', type: 'terminal', status: 'online', mac: 'AA:BB:CC:DD:EE:11', ip: '192.168.1.11', links: ['c1-t1-n2'], x: 720, y: 180, rssi: -55, customerId: 'c1' },
-      { id: 'c1-t1-n5', name: '总部-终端2', type: 'terminal', status: 'online', mac: 'AA:BB:CC:DD:EE:12', ip: '192.168.1.12', links: ['c1-t1-n3'], x: 220, y: 520, rssi: -68, customerId: 'c1' },
+      { id: 'c1-t1-n1', name: '总部-网关A', type: 'gateway', status: 'online', mac: 'AA:BB:CC:DD:EE:01', ip: '192.168.1.1', links: ['c1-t1-n2','c1-t1-n3'], x: 300, y: 200, rssi: -45, frequency: 2400, customerId: 'c1' },
+      { id: 'c1-t1-n2', name: '总部-中继1', type: 'relay', status: 'online', mac: 'AA:BB:CC:DD:EE:02', ip: '192.168.1.2', links: ['c1-t1-n1','c1-t1-n4'], x: 520, y: 240, rssi: -60, frequency: 2450, customerId: 'c1' },
+      { id: 'c1-t1-n3', name: '总部-中继2', type: 'relay', status: 'warning', mac: 'AA:BB:CC:DD:EE:03', ip: '192.168.1.3', links: ['c1-t1-n1','c1-t1-n5'], x: 280, y: 380, rssi: -72, frequency: 2450, customerId: 'c1' },
+      { id: 'c1-t1-n4', name: '总部-终端1', type: 'terminal', status: 'online', mac: 'AA:BB:CC:DD:EE:11', ip: '192.168.1.11', links: ['c1-t1-n2'], x: 720, y: 180, rssi: -55, frequency: 2480, customerId: 'c1' },
+      { id: 'c1-t1-n5', name: '总部-终端2', type: 'terminal', status: 'online', mac: 'AA:BB:CC:DD:EE:12', ip: '192.168.1.12', links: ['c1-t1-n3'], x: 220, y: 520, rssi: -68, frequency: 2480, customerId: 'c1' },
     ],
     links: [
       { id: 'c1-t1-l1', source: 'c1-t1-n1', target: 'c1-t1-n2', bandwidth: 48, latency: 8, distance: 35, rssi: -58, customerId: 'c1' },
@@ -90,12 +91,12 @@ const topologyMaps: TopologyMap[] = [
     layoutPreference: 'force',
     labelMode: 'bandwidth',
     nodes: [
-      { id: 'c1-t2-n1', name: '研发-主网关', type: 'gateway', status: 'online', mac: 'AA:BB:CC:DD:EE:21', ip: '192.168.2.1', links: ['c1-t2-n2','c1-t2-n3'], x: 400, y: 250, rssi: -42, customerId: 'c1' },
-      { id: 'c1-t2-n2', name: '研发-实验室中继', type: 'relay', status: 'online', mac: 'AA:BB:CC:DD:EE:22', ip: '192.168.2.2', links: ['c1-t2-n1','c1-t2-n4','c1-t2-n5'], x: 200, y: 150, rssi: -58, customerId: 'c1' },
-      { id: 'c1-t2-n3', name: '研发-测试中继', type: 'relay', status: 'online', mac: 'AA:BB:CC:DD:EE:23', ip: '192.168.2.3', links: ['c1-t2-n1','c1-t2-n6'], x: 600, y: 150, rssi: -55, customerId: 'c1' },
-      { id: 'c1-t2-n4', name: '研发-设备1', type: 'terminal', status: 'online', mac: 'AA:BB:CC:DD:EE:31', ip: '192.168.2.11', links: ['c1-t2-n2'], x: 100, y: 50, rssi: -65, customerId: 'c1' },
-      { id: 'c1-t2-n5', name: '研发-设备2', type: 'terminal', status: 'online', mac: 'AA:BB:CC:DD:EE:32', ip: '192.168.2.12', links: ['c1-t2-n2'], x: 150, y: 300, rssi: -62, customerId: 'c1' },
-      { id: 'c1-t2-n6', name: '研发-测试设备', type: 'terminal', status: 'warning', mac: 'AA:BB:CC:DD:EE:33', ip: '192.168.2.13', links: ['c1-t2-n3'], x: 700, y: 50, rssi: -78, customerId: 'c1' },
+      { id: 'c1-t2-n1', name: '研发-主网关', type: 'gateway', status: 'online', mac: 'AA:BB:CC:DD:EE:21', ip: '192.168.2.1', links: ['c1-t2-n2','c1-t2-n3'], x: 400, y: 250, rssi: -42, frequency: 5800, customerId: 'c1' },
+      { id: 'c1-t2-n2', name: '研发-实验室中继', type: 'relay', status: 'online', mac: 'AA:BB:CC:DD:EE:22', ip: '192.168.2.2', links: ['c1-t2-n1','c1-t2-n4','c1-t2-n5'], x: 200, y: 150, rssi: -58, frequency: 5850, customerId: 'c1' },
+      { id: 'c1-t2-n3', name: '研发-测试中继', type: 'relay', status: 'online', mac: 'AA:BB:CC:DD:EE:23', ip: '192.168.2.3', links: ['c1-t2-n1','c1-t2-n6'], x: 600, y: 150, rssi: -55, frequency: 5850, customerId: 'c1' },
+      { id: 'c1-t2-n4', name: '研发-设备1', type: 'terminal', status: 'online', mac: 'AA:BB:CC:DD:EE:31', ip: '192.168.2.11', links: ['c1-t2-n2'], x: 100, y: 50, rssi: -65, frequency: 5900, customerId: 'c1' },
+      { id: 'c1-t2-n5', name: '研发-设备2', type: 'terminal', status: 'online', mac: 'AA:BB:CC:DD:EE:32', ip: '192.168.2.12', links: ['c1-t2-n2'], x: 150, y: 300, rssi: -62, frequency: 5900, customerId: 'c1' },
+      { id: 'c1-t2-n6', name: '研发-测试设备', type: 'terminal', status: 'warning', mac: 'AA:BB:CC:DD:EE:33', ip: '192.168.2.13', links: ['c1-t2-n3'], x: 700, y: 50, rssi: -78, frequency: 5800, customerId: 'c1' },
     ],
     links: [
       { id: 'c1-t2-l1', source: 'c1-t2-n1', target: 'c1-t2-n2', bandwidth: 52, latency: 6, distance: 28, rssi: -52, customerId: 'c1' },
@@ -114,15 +115,15 @@ const topologyMaps: TopologyMap[] = [
     layoutPreference: 'hierarchy',
     labelMode: 'rssi',
     nodes: [
-      { id: 'c1-t3-n1', name: '生产-核心网关', type: 'gateway', status: 'online', mac: 'AA:BB:CC:DD:EE:41', ip: '192.168.3.1', links: ['c1-t3-n2','c1-t3-n3','c1-t3-n4'], x: 400, y: 200, rssi: -38, customerId: 'c1' },
-      { id: 'c1-t3-n2', name: '生产-车间1中继', type: 'relay', status: 'online', mac: 'AA:BB:CC:DD:EE:42', ip: '192.168.3.2', links: ['c1-t3-n1','c1-t3-n5','c1-t3-n6'], x: 200, y: 100, rssi: -52, customerId: 'c1' },
-      { id: 'c1-t3-n3', name: '生产-车间2中继', type: 'relay', status: 'online', mac: 'AA:BB:CC:DD:EE:43', ip: '192.168.3.3', links: ['c1-t3-n1','c1-t3-n7','c1-t3-n8'], x: 600, y: 100, rssi: -50, customerId: 'c1' },
-      { id: 'c1-t3-n4', name: '生产-质检中继', type: 'relay', status: 'warning', mac: 'AA:BB:CC:DD:EE:44', ip: '192.168.3.4', links: ['c1-t3-n1','c1-t3-n9'], x: 400, y: 400, rssi: -68, customerId: 'c1' },
-      { id: 'c1-t3-n5', name: '生产-设备A', type: 'terminal', status: 'online', mac: 'AA:BB:CC:DD:EE:51', ip: '192.168.3.11', links: ['c1-t3-n2'], x: 100, y: 50, rssi: -58, customerId: 'c1' },
-      { id: 'c1-t3-n6', name: '生产-设备B', type: 'terminal', status: 'online', mac: 'AA:BB:CC:DD:EE:52', ip: '192.168.3.12', links: ['c1-t3-n2'], x: 250, y: 50, rssi: -60, customerId: 'c1' },
-      { id: 'c1-t3-n7', name: '生产-设备C', type: 'terminal', status: 'online', mac: 'AA:BB:CC:DD:EE:53', ip: '192.168.3.13', links: ['c1-t3-n3'], x: 550, y: 50, rssi: -56, customerId: 'c1' },
-      { id: 'c1-t3-n8', name: '生产-设备D', type: 'terminal', status: 'offline', mac: 'AA:BB:CC:DD:EE:54', ip: '192.168.3.14', links: ['c1-t3-n3'], x: 700, y: 50, rssi: -88, customerId: 'c1' },
-      { id: 'c1-t3-n9', name: '生产-质检设备', type: 'terminal', status: 'warning', mac: 'AA:BB:CC:DD:EE:55', ip: '192.168.3.15', links: ['c1-t3-n4'], x: 400, y: 500, rssi: -75, customerId: 'c1' },
+      { id: 'c1-t3-n1', name: '生产-核心网关', type: 'gateway', status: 'online', mac: 'AA:BB:CC:DD:EE:41', ip: '192.168.3.1', links: ['c1-t3-n2','c1-t3-n3','c1-t3-n4'], x: 400, y: 200, rssi: -38, frequency: 2400, customerId: 'c1' },
+      { id: 'c1-t3-n2', name: '生产-车间1中继', type: 'relay', status: 'online', mac: 'AA:BB:CC:DD:EE:42', ip: '192.168.3.2', links: ['c1-t3-n1','c1-t3-n5','c1-t3-n6'], x: 200, y: 100, rssi: -52, frequency: 2420, customerId: 'c1' },
+      { id: 'c1-t3-n3', name: '生产-车间2中继', type: 'relay', status: 'online', mac: 'AA:BB:CC:DD:EE:43', ip: '192.168.3.3', links: ['c1-t3-n1','c1-t3-n7','c1-t3-n8'], x: 600, y: 100, rssi: -50, frequency: 2440, customerId: 'c1' },
+      { id: 'c1-t3-n4', name: '生产-质检中继', type: 'relay', status: 'warning', mac: 'AA:BB:CC:DD:EE:44', ip: '192.168.3.4', links: ['c1-t3-n1','c1-t3-n9'], x: 400, y: 400, rssi: -68, frequency: 2460, customerId: 'c1' },
+      { id: 'c1-t3-n5', name: '生产-设备A', type: 'terminal', status: 'online', mac: 'AA:BB:CC:DD:EE:51', ip: '192.168.3.11', links: ['c1-t3-n2'], x: 100, y: 50, rssi: -58, frequency: 2420, customerId: 'c1' },
+      { id: 'c1-t3-n6', name: '生产-设备B', type: 'terminal', status: 'online', mac: 'AA:BB:CC:DD:EE:52', ip: '192.168.3.12', links: ['c1-t3-n2'], x: 250, y: 50, rssi: -60, frequency: 2420, customerId: 'c1' },
+      { id: 'c1-t3-n7', name: '生产-设备C', type: 'terminal', status: 'online', mac: 'AA:BB:CC:DD:EE:53', ip: '192.168.3.13', links: ['c1-t3-n3'], x: 550, y: 50, rssi: -56, frequency: 2440, customerId: 'c1' },
+      { id: 'c1-t3-n8', name: '生产-设备D', type: 'terminal', status: 'offline', mac: 'AA:BB:CC:DD:EE:54', ip: '192.168.3.14', links: ['c1-t3-n3'], x: 700, y: 50, rssi: -88, frequency: 2440, customerId: 'c1' },
+      { id: 'c1-t3-n9', name: '生产-质检设备', type: 'terminal', status: 'warning', mac: 'AA:BB:CC:DD:EE:55', ip: '192.168.3.15', links: ['c1-t3-n4'], x: 400, y: 500, rssi: -75, frequency: 2460, customerId: 'c1' },
     ],
     links: [
       { id: 'c1-t3-l1', source: 'c1-t3-n1', target: 'c1-t3-n2', bandwidth: 60, latency: 4, distance: 22, rssi: -48, customerId: 'c1' },
@@ -145,13 +146,13 @@ const topologyMaps: TopologyMap[] = [
     layoutPreference: 'force',
     labelMode: 'bandwidth',
     nodes: [
-      { id: 'c2-t1-n1', name: '北大-主网关', type: 'gateway', status: 'online', mac: 'BB:CC:DD:EE:FF:01', ip: '10.0.0.1', links: ['c2-t1-n2','c2-t1-n3','c2-t1-n4'], x: 400, y: 300, rssi: -40, customerId: 'c2' },
-      { id: 'c2-t1-n2', name: '北大-教学楼中继', type: 'relay', status: 'online', mac: 'BB:CC:DD:EE:FF:02', ip: '10.0.0.2', links: ['c2-t1-n1','c2-t1-n5'], x: 200, y: 200, rssi: -55, customerId: 'c2' },
-      { id: 'c2-t1-n3', name: '北大-宿舍中继', type: 'relay', status: 'online', mac: 'BB:CC:DD:EE:FF:03', ip: '10.0.0.3', links: ['c2-t1-n1','c2-t1-n6'], x: 600, y: 200, rssi: -58, customerId: 'c2' },
-      { id: 'c2-t1-n4', name: '北大-图书馆中继', type: 'relay', status: 'warning', mac: 'BB:CC:DD:EE:FF:04', ip: '10.0.0.4', links: ['c2-t1-n1','c2-t1-n7'], x: 400, y: 500, rssi: -65, customerId: 'c2' },
-      { id: 'c2-t1-n5', name: '北大-实验室终端', type: 'terminal', status: 'online', mac: 'BB:CC:DD:EE:FF:11', ip: '10.0.0.11', links: ['c2-t1-n2'], x: 100, y: 100, rssi: -70, customerId: 'c2' },
-      { id: 'c2-t1-n6', name: '北大-宿舍终端', type: 'terminal', status: 'online', mac: 'BB:CC:DD:EE:FF:12', ip: '10.0.0.12', links: ['c2-t1-n3'], x: 700, y: 100, rssi: -72, customerId: 'c2' },
-      { id: 'c2-t1-n7', name: '北大-阅览室终端', type: 'terminal', status: 'offline', mac: 'BB:CC:DD:EE:FF:13', ip: '10.0.0.13', links: ['c2-t1-n4'], x: 400, y: 600, rssi: -85, customerId: 'c2' },
+      { id: 'c2-t1-n1', name: '北大-主网关', type: 'gateway', status: 'online', mac: 'BB:CC:DD:EE:FF:01', ip: '10.0.0.1', links: ['c2-t1-n2','c2-t1-n3','c2-t1-n4'], x: 400, y: 300, rssi: -40, frequency: 5200, customerId: 'c2' },
+      { id: 'c2-t1-n2', name: '北大-教学楼中继', type: 'relay', status: 'online', mac: 'BB:CC:DD:EE:FF:02', ip: '10.0.0.2', links: ['c2-t1-n1','c2-t1-n5'], x: 200, y: 200, rssi: -55, frequency: 5220, customerId: 'c2' },
+      { id: 'c2-t1-n3', name: '北大-宿舍中继', type: 'relay', status: 'online', mac: 'BB:CC:DD:EE:FF:03', ip: '10.0.0.3', links: ['c2-t1-n1','c2-t1-n6'], x: 600, y: 200, rssi: -58, frequency: 5240, customerId: 'c2' },
+      { id: 'c2-t1-n4', name: '北大-图书馆中继', type: 'relay', status: 'warning', mac: 'BB:CC:DD:EE:FF:04', ip: '10.0.0.4', links: ['c2-t1-n1','c2-t1-n7'], x: 400, y: 500, rssi: -65, frequency: 5260, customerId: 'c2' },
+      { id: 'c2-t1-n5', name: '北大-实验室终端', type: 'terminal', status: 'online', mac: 'BB:CC:DD:EE:FF:11', ip: '10.0.0.11', links: ['c2-t1-n2'], x: 100, y: 100, rssi: -70, frequency: 5220, customerId: 'c2' },
+      { id: 'c2-t1-n6', name: '北大-宿舍终端', type: 'terminal', status: 'online', mac: 'BB:CC:DD:EE:FF:12', ip: '10.0.0.12', links: ['c2-t1-n3'], x: 700, y: 100, rssi: -72, frequency: 5240, customerId: 'c2' },
+      { id: 'c2-t1-n7', name: '北大-阅览室终端', type: 'terminal', status: 'offline', mac: 'BB:CC:DD:EE:FF:13', ip: '10.0.0.13', links: ['c2-t1-n4'], x: 400, y: 600, rssi: -85, frequency: 5260, customerId: 'c2' },
     ],
     links: [
       { id: 'c2-t1-l1', source: 'c2-t1-n1', target: 'c2-t1-n2', bandwidth: 54, latency: 5, distance: 25, rssi: -50, customerId: 'c2' },
@@ -171,12 +172,12 @@ const topologyMaps: TopologyMap[] = [
     layoutPreference: 'hierarchy',
     labelMode: 'latency',
     nodes: [
-      { id: 'c2-t2-n1', name: '计院-核心交换机', type: 'gateway', status: 'online', mac: 'BB:CC:DD:EE:FF:21', ip: '10.1.0.1', links: ['c2-t2-n2','c2-t2-n3'], x: 350, y: 200, rssi: -35, customerId: 'c2-1' },
-      { id: 'c2-t2-n2', name: '计院-实验室1中继', type: 'relay', status: 'online', mac: 'BB:CC:DD:EE:FF:22', ip: '10.1.0.2', links: ['c2-t2-n1','c2-t2-n4','c2-t2-n5'], x: 200, y: 350, rssi: -48, customerId: 'c2-1' },
-      { id: 'c2-t2-n3', name: '计院-实验室2中继', type: 'relay', status: 'online', mac: 'BB:CC:DD:EE:FF:23', ip: '10.1.0.3', links: ['c2-t2-n1','c2-t2-n6'], x: 500, y: 350, rssi: -52, customerId: 'c2-1' },
-      { id: 'c2-t2-n4', name: '计院-服务器1', type: 'terminal', status: 'online', mac: 'BB:CC:DD:EE:FF:31', ip: '10.1.0.11', links: ['c2-t2-n2'], x: 100, y: 450, rssi: -58, customerId: 'c2-1' },
-      { id: 'c2-t2-n5', name: '计院-服务器2', type: 'terminal', status: 'online', mac: 'BB:CC:DD:EE:FF:32', ip: '10.1.0.12', links: ['c2-t2-n2'], x: 250, y: 500, rssi: -62, customerId: 'c2-1' },
-      { id: 'c2-t2-n6', name: '计院-工作站', type: 'terminal', status: 'warning', mac: 'BB:CC:DD:EE:FF:33', ip: '10.1.0.13', links: ['c2-t2-n3'], x: 600, y: 450, rssi: -75, customerId: 'c2-1' },
+      { id: 'c2-t2-n1', name: '计院-核心交换机', type: 'gateway', status: 'online', mac: 'BB:CC:DD:EE:FF:21', ip: '10.1.0.1', links: ['c2-t2-n2','c2-t2-n3'], x: 350, y: 200, rssi: -35, frequency: 6000, customerId: 'c2-1' },
+      { id: 'c2-t2-n2', name: '计院-实验室1中继', type: 'relay', status: 'online', mac: 'BB:CC:DD:EE:FF:22', ip: '10.1.0.2', links: ['c2-t2-n1','c2-t2-n4','c2-t2-n5'], x: 200, y: 350, rssi: -48, frequency: 6020, customerId: 'c2-1' },
+      { id: 'c2-t2-n3', name: '计院-实验室2中继', type: 'relay', status: 'online', mac: 'BB:CC:DD:EE:FF:23', ip: '10.1.0.3', links: ['c2-t2-n1','c2-t2-n6'], x: 500, y: 350, rssi: -52, frequency: 6040, customerId: 'c2-1' },
+      { id: 'c2-t2-n4', name: '计院-服务器1', type: 'terminal', status: 'online', mac: 'BB:CC:DD:EE:FF:31', ip: '10.1.0.11', links: ['c2-t2-n2'], x: 100, y: 450, rssi: -58, frequency: 6020, customerId: 'c2-1' },
+      { id: 'c2-t2-n5', name: '计院-服务器2', type: 'terminal', status: 'online', mac: 'BB:CC:DD:EE:FF:32', ip: '10.1.0.12', links: ['c2-t2-n2'], x: 250, y: 500, rssi: -62, frequency: 6020, customerId: 'c2-1' },
+      { id: 'c2-t2-n6', name: '计院-工作站', type: 'terminal', status: 'warning', mac: 'BB:CC:DD:EE:FF:33', ip: '10.1.0.13', links: ['c2-t2-n3'], x: 600, y: 450, rssi: -75, frequency: 6040, customerId: 'c2-1' },
     ],
     links: [
       { id: 'c2-t2-l1', source: 'c2-t2-n1', target: 'c2-t2-n2', bandwidth: 48, latency: 3, distance: 18, rssi: -42, customerId: 'c2-1' },
@@ -194,6 +195,16 @@ const statusConf = (s: NodeStatus) => s==='online'
   : s==='offline'
   ? { color:'#ff4d4f', text:'离线', badge:'error' as const, icon:<CloseCircleOutlined/> }
   : { color:'#faad14', text:'异常', badge:'warning' as const, icon:<ExclamationCircleOutlined/> }
+
+const formatFrequency = (freq: number) => {
+  if (freq >= 6000) {
+    return `${(freq/1000).toFixed(1)} GHz`
+  } else if (freq >= 1000) {
+    return `${(freq/1000).toFixed(1)} GHz`
+  } else {
+    return `${freq} MHz`
+  }
+}
 
 const typeConf = (t: NodeType) => t==='gateway'
   ? { color:'#1890ff', text:'网关' }
@@ -296,7 +307,12 @@ const TopologyManagement: React.FC = () => {
     const warning = nodes.filter(n => n.status === 'warning').length
     const avgLatency = Math.round(links.filter(l => l.latency > 0).reduce((s, l) => s + l.latency, 0) / Math.max(1, links.filter(l => l.latency > 0).length))
     const coverage = Math.round((online / Math.max(1, total)) * 100)
-    return { total, online, offline, warning, coverage, avgLatency }
+
+    // 频率统计
+    const frequencies = nodes.map(n => n.frequency)
+    const avgFrequency = frequencies.length > 0 ? Math.round(frequencies.reduce((s, f) => s + f, 0) / frequencies.length) : 0
+
+    return { total, online, offline, warning, coverage, avgLatency, avgFrequency }
   }, [nodes, links])
 
   // Enhanced hierarchical layout
@@ -897,20 +913,7 @@ const TopologyManagement: React.FC = () => {
                       }}
                     />
                   </Tooltip>
-                  <Tooltip title="自动布局" placement="bottom">
-                    <Button
-                      icon={<ClusterOutlined />}
-                      onClick={autoLayout}
-                      size="small"
-                      style={{
-                        borderRadius: 6,
-                        background: 'linear-gradient(135deg, #52c41a, #73d13d)',
-                        borderColor: '#52c41a',
-                        color: '#fff',
-                        boxShadow: '0 2px 6px rgba(82,196,26,0.3)'
-                      }}
-                    />
-                  </Tooltip>
+
                   <Tooltip title="刷新数据" placement="bottom">
                     <Button
                       icon={<ReloadOutlined />}
@@ -1003,7 +1006,7 @@ const TopologyManagement: React.FC = () => {
                         style={{
                           height: isFullscreen ? '400px' : '380px',
                           flexShrink: 0,
-                          marginBottom: '8px'
+                          marginBottom: '20px'
                         }}
                         className="panel-overview"
                       >
@@ -1066,6 +1069,12 @@ const TopologyManagement: React.FC = () => {
                               <span style={{ color: '#d9d9d9', fontSize: 13 }}>连接数：</span>
                               <Tag color="geekblue" style={{ borderRadius: 4 }}>{links.length}</Tag>
                             </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ color: '#d9d9d9', fontSize: 13 }}>平均频率：</span>
+                              <Tag color="orange" style={{ borderRadius: 4 }}>
+                                {formatFrequency(stats.avgFrequency)}
+                              </Tag>
+                            </div>
                           </Space>
                         </div>
                         </div>
@@ -1076,6 +1085,7 @@ const TopologyManagement: React.FC = () => {
                         style={{
                           flex: 1,
                           minHeight: '200px',
+                          marginTop: '8px',
                           marginBottom: '8px'
                         }}
                         className="panel-nodes"
@@ -1298,7 +1308,7 @@ const TopologyManagement: React.FC = () => {
                       <Tooltip title="放大"><Button size="small" icon={<ZoomInOutlined />} onClick={zoomIn} /></Tooltip>
                       <Tooltip title="缩小"><Button size="small" icon={<ZoomOutOutlined />} onClick={zoomOut} /></Tooltip>
                       <Tooltip title="重置视图"><Button size="small" icon={<CompressOutlined />} onClick={resetView} /></Tooltip>
-                      <Tooltip title="自动布局"><Button size="small" icon={<ClusterOutlined />} onClick={autoLayout} /></Tooltip>
+
                       <Tooltip title="退出全屏"><Button size="small" icon={<FullscreenExitOutlined />} onClick={exitFullscreen} /></Tooltip>
                     </Space>
                   </div>
@@ -1505,6 +1515,16 @@ const TopologyManagement: React.FC = () => {
                               style={{ fontSize: 12 }}
                             >
                               📶 {selected.rssi} dBm
+                            </Tag>
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ color: '#d9d9d9', fontSize: 14 }}>工作频率：</span>
+                            <Tag
+                              color={selected.frequency >= 6000 ? 'gold' : selected.frequency >= 5000 ? 'green' : 'cyan'}
+                              style={{ fontSize: 12 }}
+                            >
+                              📡 {formatFrequency(selected.frequency)}
                             </Tag>
                           </div>
 
