@@ -1,9 +1,9 @@
 {
   "version": 2,
-  "buildCommand": "npx vite build",
+  "buildCommand": "node build.cjs",
   "outputDirectory": "dist",
-  "installCommand": "npm ci",
-  "framework": "vite",
+  "installCommand": "npm install",
+  "framework": null,
   "functions": {},
   "rewrites": [
     {

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "npx vite",
     "build": "npx vite build",
-    "build:vercel": "node build.js",
+    "build:vercel": "node build.cjs",
     "lint": "eslint .",
     "preview": "npx vite preview",
     "check": "npx tsc --noEmit"
