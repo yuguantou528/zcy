@@ -10,7 +10,9 @@ import {
 type CameraStatus = 'online' | 'offline' | 'warning'
 interface Camera { id: string; name: string; location: string; status: CameraStatus; resolution: string; fps: number; recording: boolean; stream?: string }
 
-const cardStyle = { background: '#fff', borderRadius: 8, boxShadow: '0 1px 4px rgba(0,21,41,.08)', border: '1px solid #f0f0f0', marginBottom: 16 }
+const cardStyle = { background: '#fff', borderRadius: 8, boxShadow: '0 1px 4px rgba(0,21,41,.08)', border: '1px solid #f0f0f0' }
+const compactCardStyle = { ...cardStyle, marginBottom: 12 }
+const headerCardStyle = { ...cardStyle, marginBottom: 8 }
 
 const initialCameras: Camera[] = [
   { id: 'c1', name: '主入口监控', location: '大厅入口', status: 'online',  resolution: '1920x1080', fps: 30, recording: true,  stream: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4' },
@@ -75,63 +77,101 @@ const VideoMonitoring: React.FC = () => {
   const goFullscreen = () => playerBoxRef.current?.requestFullscreen?.()
 
   return (
-    <div style={{ background: 'transparent' }}>
-      {/* 标题 */}
-      <Card style={cardStyle}>
-        <Row align="middle" justify="space-between" gutter={[8,8]}>
+    <div style={{ background: 'transparent', padding: '0 4px' }}>
+      {/* 紧凑型标题栏 */}
+      <Card style={headerCardStyle} bodyStyle={{ padding: '12px 16px' }}>
+        <Row align="middle" justify="space-between" gutter={[12,8]}>
           <Col flex="auto">
-            <Space>
-              <VideoCameraOutlined style={{ fontSize: 22, color: '#1890ff' }} />
+            <Space size={12}>
+              <VideoCameraOutlined style={{ fontSize: 20, color: '#1890ff' }} />
               <div>
-                <h2 style={{ margin: 0, color: '#262626' }}>视频监控中心</h2>
-                <div style={{ color: '#8c8c8c', fontSize: 12 }}>时间：{now.toLocaleString('zh-CN')}</div>
+                <h3 style={{ margin: 0, color: '#262626', fontSize: 16, fontWeight: 600 }}>视频监控中心</h3>
+                <div style={{ color: '#8c8c8c', fontSize: 11, marginTop: 2 }}>{now.toLocaleString('zh-CN')}</div>
               </div>
             </Space>
           </Col>
           <Col>
-            <Space wrap>
-              <Input.Search allowClear placeholder="搜索摄像头" onSearch={setKeyword} style={{ width: 200 }} />
-              <Select size="middle" value={statusFilter} style={{ width: 120 }} onChange={v=>setStatusFilter(v as any)}
+            <Space wrap size={8}>
+              <Input.Search allowClear placeholder="搜索摄像头" onSearch={setKeyword} style={{ width: 180 }} size="small" />
+              <Select size="small" value={statusFilter} style={{ width: 100 }} onChange={v=>setStatusFilter(v as any)}
                 options={[{label:'全部', value:'all'},{label:'在线',value:'online'},{label:'离线',value:'offline'},{label:'异常',value:'warning'}]} />
-              <Segmented options={[{label:'单画面', value:'single', icon:<ProfileOutlined/>},{label:'四宫格', value:'quad', icon:<AppstoreOutlined/>}]} value={layout} onChange={(v)=>setLayout(v as any)} />
-              <Tag color={current?.recording ? 'red' : 'default'}>{current?.recording ? 'REC 录制中' : '未录制'}</Tag>
-              <Button icon={<SettingOutlined />}>系统设置</Button>
+              <Segmented size="small" options={[{label:'单画面', value:'single', icon:<ProfileOutlined/>},{label:'四宫格', value:'quad', icon:<AppstoreOutlined/>}]} value={layout} onChange={(v)=>setLayout(v as any)} />
+              <Tag color={current?.recording ? 'red' : 'default'} style={{ margin: 0 }}>{current?.recording ? 'REC' : '未录制'}</Tag>
+              <Button icon={<SettingOutlined />} size="small">设置</Button>
             </Space>
           </Col>
         </Row>
       </Card>
 
-      {/* 统计 */}
-      <Row gutter={[16,16]} style={{ marginBottom: 16 }}>
-        {[{t:'在线摄像头',v:stats.online,c:'#52c41a'},{t:'录制中',v:stats.recording,c:'#1890ff'},{t:'离线设备',v:stats.offline,c:'#ff4d4f'},{t:'异常设备',v:stats.warning,c:'#faad14'}].map((s,i)=> (
-          <Col xs={12} sm={6} key={i}>
-            <Card style={cardStyle}>
-              <Statistic title={s.t} value={s.v} suffix={`/ ${stats.total}`} valueStyle={{ color: s.c }} />
-              <Progress percent={Math.round((s.v/(stats.total||1))*100)} size="small" showInfo={false} style={{ marginTop: 8 }} />
-            </Card>
-          </Col>
-        ))}
-      </Row>
+      {/* 紧凑型统计面板 */}
+      <Card style={compactCardStyle} bodyStyle={{ padding: '12px 16px' }}>
+        <Row gutter={[16,0]}>
+          {[{t:'在线',v:stats.online,c:'#52c41a'},{t:'录制',v:stats.recording,c:'#1890ff'},{t:'离线',v:stats.offline,c:'#ff4d4f'},{t:'异常',v:stats.warning,c:'#faad14'}].map((s,i)=> (
+            <Col xs={12} sm={6} key={i}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: 20, fontWeight: 600, color: s.c, lineHeight: 1.2 }}>
+                  {s.v}<span style={{ fontSize: 12, color: '#8c8c8c', fontWeight: 400 }}>/{stats.total}</span>
+                </div>
+                <div style={{ fontSize: 12, color: '#8c8c8c', marginTop: 2 }}>{s.t}</div>
+                <Progress
+                  percent={Math.round((s.v/(stats.total||1))*100)}
+                  size="small"
+                  showInfo={false}
+                  style={{ marginTop: 4 }}
+                  strokeColor={s.c}
+                />
+              </div>
+            </Col>
+          ))}
+        </Row>
+      </Card>
 
-      <Row gutter={[16,16]}>
-        {/* 摄像头列表 */}
-        <Col xs={24} lg={8}>
-          <Card style={cardStyle} title={<Space><CameraOutlined/>摄像头列表<Badge count={stats.online} showZero/></Space>}>
+      <Row gutter={[12,12]}>
+        {/* 优化的摄像头列表 */}
+        <Col xs={24} lg={7}>
+          <Card
+            style={compactCardStyle}
+            title={<Space size={8}><CameraOutlined style={{ fontSize: 14 }}/>摄像头列表<Badge count={stats.online} showZero size="small"/></Space>}
+            bodyStyle={{ padding: '8px 0' }}
+            headStyle={{ padding: '8px 16px', minHeight: 'auto' }}
+          >
             <List
+              size="small"
               dataSource={cameras.filter(c=> (statusFilter==='all'||c.status===statusFilter) && (!keyword || c.name.includes(keyword) || c.location.includes(keyword)))}
               renderItem={cam => {
                 const sc = statusConf(cam.status)
                 return (
-                  <List.Item onClick={()=>setSelectedId(cam.id)} style={{ cursor:'pointer', background:selectedId===cam.id?'#f0f8ff':'transparent', borderRadius:4, padding:8 }}>
+                  <List.Item
+                    onClick={()=>setSelectedId(cam.id)}
+                    style={{
+                      cursor:'pointer',
+                      background:selectedId===cam.id?'#e6f7ff':'transparent',
+                      borderRadius:4,
+                      padding:'6px 16px',
+                      margin: '0 8px 4px 8px',
+                      border: selectedId===cam.id ? '1px solid #91d5ff' : '1px solid transparent'
+                    }}
+                  >
                     <List.Item.Meta
-                      avatar={<Badge status={sc.badge} dot><Avatar icon={<VideoCameraOutlined/>}/></Badge>}
-                      title={<Space size={8}>{cam.name}{cam.recording && <Tag color="red">REC</Tag>}</Space>}
-                      description={<Space size={6} wrap>
-                        <span style={{color:'#8c8c8c'}}>{cam.location}</span>
-                        <Tag color={sc.color}>{sc.text}</Tag>
-                        <Tag>{cam.resolution}</Tag>
-                        {cam.status==='online' && <Tag>{cam.fps}fps</Tag>}
-                      </Space>}
+                      avatar={<Badge status={sc.badge} dot size="small"><Avatar size="small" icon={<VideoCameraOutlined/>}/></Badge>}
+                      title={
+                        <div style={{ fontSize: 13, fontWeight: 500, lineHeight: 1.3 }}>
+                          <Space size={4}>
+                            {cam.name}
+                            {cam.recording && <Tag color="red" style={{ fontSize: 10, padding: '0 4px', lineHeight: '16px' }}>REC</Tag>}
+                          </Space>
+                        </div>
+                      }
+                      description={
+                        <div style={{ fontSize: 11, lineHeight: 1.2, marginTop: 2 }}>
+                          <div style={{color:'#8c8c8c', marginBottom: 2}}>{cam.location}</div>
+                          <Space size={4} wrap>
+                            <Tag color={sc.color} style={{ fontSize: 10, padding: '0 4px', lineHeight: '16px' }}>{sc.text}</Tag>
+                            <Tag style={{ fontSize: 10, padding: '0 4px', lineHeight: '16px' }}>{cam.resolution}</Tag>
+                            {cam.status==='online' && <Tag style={{ fontSize: 10, padding: '0 4px', lineHeight: '16px' }}>{cam.fps}fps</Tag>}
+                          </Space>
+                        </div>
+                      }
                     />
                   </List.Item>
                 )
@@ -140,13 +180,35 @@ const VideoMonitoring: React.FC = () => {
           </Card>
         </Col>
 
-        {/* 右侧：视频与控制 */}
-        <Col xs={24} lg={16}>
-          <Space direction="vertical" size="middle" style={{ width:'100%' }}>
-            <Card style={cardStyle}
-              title={<Space><MonitorOutlined/>{current?.name || '选择摄像头'}<Select size="small" value={selectedId} onChange={setSelectedId} style={{ width: 200 }} options={cameras.map(c=>({value:c.id,label:c.name}))}/></Space>}
-              extra={<Space><Button icon={<PlayCircleOutlined/>} onClick={handlePlay}>播放</Button><Button icon={<PauseCircleOutlined/>} onClick={handlePause}>暂停</Button><Button icon={<FullscreenOutlined/>} onClick={goFullscreen}>全屏</Button></Space>}>
-              <div ref={playerBoxRef} style={{ width:'100%', height: layout==='single'? 400 : 460, background:'#000', borderRadius:4, position:'relative', padding: layout==='single'? 0 : 8 }}>
+        {/* 优化的视频播放区域 */}
+        <Col xs={24} lg={17}>
+          <Space direction="vertical" size={8} style={{ width:'100%' }}>
+            <Card
+              style={compactCardStyle}
+              title={
+                <Space size={8}>
+                  <MonitorOutlined style={{ fontSize: 14 }}/>
+                  <span style={{ fontSize: 14, fontWeight: 500 }}>{current?.name || '选择摄像头'}</span>
+                  <Select
+                    size="small"
+                    value={selectedId}
+                    onChange={setSelectedId}
+                    style={{ width: 160, fontSize: 12 }}
+                    options={cameras.map(c=>({value:c.id,label:c.name}))}
+                  />
+                </Space>
+              }
+              extra={
+                <Space size={4}>
+                  <Button size="small" icon={<PlayCircleOutlined/>} onClick={handlePlay}>播放</Button>
+                  <Button size="small" icon={<PauseCircleOutlined/>} onClick={handlePause}>暂停</Button>
+                  <Button size="small" icon={<FullscreenOutlined/>} onClick={goFullscreen}>全屏</Button>
+                </Space>
+              }
+              bodyStyle={{ padding: 8 }}
+              headStyle={{ padding: '8px 16px', minHeight: 'auto' }}
+            >
+              <div ref={playerBoxRef} style={{ width:'100%', height: layout==='single'? 'calc(100vh - 320px)' : 'calc(100vh - 280px)', minHeight: 360, background:'#000', borderRadius:4, position:'relative', padding: layout==='single'? 0 : 8 }}>
                 {layout==='single' ? (
                   <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center' }}>
                     {current?.status==='online' ? (
@@ -195,28 +257,42 @@ const VideoMonitoring: React.FC = () => {
               </div>
             </Card>
 
-            <Card style={cardStyle} title={<Space><SettingOutlined/>控制面板</Space>}>
-              <Row gutter={[16,16]}>
-                <Col xs={24} sm={12}>
-                  <Space direction="vertical">
-                    <div><span style={{ marginRight:8 }}>录制控制:</span><Switch checked={!!current?.recording} onChange={toggleRecording} checkedChildren="录制中" unCheckedChildren="已停止" /></div>
-                    <Space>
-                      <Button icon={<PlayCircleOutlined/>} type="primary" onClick={handlePlay}>播放</Button>
-                      <Button icon={<PauseCircleOutlined/>} onClick={handlePause}>暂停</Button>
-                      <Button icon={muted ? <AudioMutedOutlined/> : <SoundOutlined/>} onClick={toggleMute}>{muted?'取消静音':'静音'}</Button>
+            <Card
+              style={compactCardStyle}
+              title={<Space size={8}><SettingOutlined style={{ fontSize: 14 }}/>控制面板</Space>}
+              bodyStyle={{ padding: '12px 16px' }}
+              headStyle={{ padding: '8px 16px', minHeight: 'auto' }}
+            >
+              <Row gutter={[16,8]} align="middle">
+                <Col xs={24} sm={14}>
+                  <Space size={12} wrap>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 12, color: '#8c8c8c' }}>录制:</span>
+                      <Switch
+                        size="small"
+                        checked={!!current?.recording}
+                        onChange={toggleRecording}
+                        checkedChildren="ON"
+                        unCheckedChildren="OFF"
+                      />
+                    </div>
+                    <Space size={6}>
+                      <Button size="small" icon={<PlayCircleOutlined/>} type="primary" onClick={handlePlay}>播放</Button>
+                      <Button size="small" icon={<PauseCircleOutlined/>} onClick={handlePause}>暂停</Button>
+                      <Button size="small" icon={muted ? <AudioMutedOutlined/> : <SoundOutlined/>} onClick={toggleMute}>
+                        {muted?'取消静音':'静音'}
+                      </Button>
                     </Space>
                   </Space>
                 </Col>
-                <Col xs={24} sm={12}>
-                  <Space direction="vertical">
-                    <div style={{ color:'#8c8c8c' }}>摄像头信息</div>
-                    {current && <div style={{ fontSize:12, color:'#8c8c8c' }}>
-                      <div>位置：{current.location}</div>
-                      <div>分辨率：{current.resolution}</div>
-                      <div>帧率：{current.fps}fps</div>
-                      <div>状态：{statusConf(current.status).text}</div>
-                    </div>}
-                  </Space>
+                <Col xs={24} sm={10}>
+                  {current && (
+                    <div style={{ fontSize: 11, color: '#8c8c8c', lineHeight: 1.4 }}>
+                      <div><strong>位置:</strong> {current.location}</div>
+                      <div><strong>分辨率:</strong> {current.resolution} | <strong>帧率:</strong> {current.fps}fps</div>
+                      <div><strong>状态:</strong> <span style={{ color: statusConf(current.status).color }}>{statusConf(current.status).text}</span></div>
+                    </div>
+                  )}
                 </Col>
               </Row>
             </Card>
