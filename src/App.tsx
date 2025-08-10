@@ -9,6 +9,8 @@ import {
   UserOutlined,
   LogoutOutlined,
   DashboardOutlined,
+  VideoCameraOutlined,
+  NodeIndexOutlined,
 } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
 
@@ -16,6 +18,8 @@ import type { MenuProps } from 'antd'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
+import VideoMonitoring from './pages/VideoMonitoring'
+import TopologyManagement from './pages/TopologyManagement'
 import SystemManagement from './pages/SystemManagement'
 import UserManagement from './pages/system/UserManagement'
 import RoleManagement from './pages/system/RoleManagement'
@@ -40,6 +44,16 @@ function App() {
       key: '/dashboard',
       icon: <DashboardOutlined />,
       label: '态势大屏',
+    },
+    {
+      key: '/video-monitoring',
+      icon: <VideoCameraOutlined />,
+      label: '视频监控',
+    },
+    {
+      key: '/topology-management',
+      icon: <NodeIndexOutlined />,
+      label: '拓扑图管理',
     },
     {
       key: '/system',
@@ -159,6 +173,8 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login onLogin={() => setIsLoggedIn(true)} />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/video-monitoring" element={<VideoMonitoring />} />
+            <Route path="/topology-management" element={<TopologyManagement />} />
             <Route path="/system" element={<SystemManagement />} />
             <Route path="/system/users" element={<UserManagement />} />
             <Route path="/system/roles" element={<RoleManagement />} />
