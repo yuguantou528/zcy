@@ -817,7 +817,7 @@ const TopologyManagement: React.FC = () => {
                 <Space size={8} wrap>
                   <Tooltip title={showSidebar ? "隐藏侧边栏" : "显示侧边栏"} placement="bottom">
                     <Button
-                      icon={showSidebar ? <CompressOutlined /> : <FullscreenExitOutlined />}
+                      icon={showSidebar ? <MenuFoldOutlined /> : <MenuUnfoldOutlined />}
                       onClick={() => setShowSidebar(!showSidebar)}
                       size="small"
                       style={{
